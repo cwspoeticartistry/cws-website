@@ -149,11 +149,14 @@ html, body {
 }
 
 #nav-logo {
-  width: 44px;
+  width: 62px;
   height: auto;
   filter: drop-shadow(0 0 10px rgba(179,139,91,0.2));
   flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 180ms;
 }
+#nav-logo:hover { opacity: 0.78; }
 
 /* ── Hamburger button (hidden on desktop) ── */
 #nav-hamburger {
@@ -484,7 +487,7 @@ html, body {
 
   /* Center logo absolutely within the fixed nav bar */
   #nav-logo {
-    width: 34px;
+    width: 44px;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);

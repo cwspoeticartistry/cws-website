@@ -27,6 +27,7 @@
   const overview           = document.getElementById('services-overview');
   const detail             = document.getElementById('service-detail');
   const detailCounter      = document.getElementById('detail-counter');
+  const navLogo            = document.getElementById('nav-logo');
   const navLinks           = Array.from(document.querySelectorAll('.svc-nav-link'));
   const hamburger          = document.getElementById('nav-hamburger');
   const mobileMenu         = document.getElementById('nav-mobile-menu');
@@ -597,6 +598,16 @@
 
   /* On hash change (back/forward navigation) */
   window.addEventListener('hashchange', () => seekToHash(window.location.hash));
+
+  /* ═══════════════════════════════════════
+     NAV LOGO — click returns to hero
+     ═══════════════════════════════════════ */
+  if (navLogo) {
+    navLogo.addEventListener('click', () => {
+      closeMobileMenu();
+      seekTo(0);
+    });
+  }
 
   /* ═══════════════════════════════════════
      DESKTOP NAV LINKS — click to jump directly to service
