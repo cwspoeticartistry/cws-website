@@ -220,8 +220,6 @@ html, body {
 .nav-mobile-link:last-child       { border-bottom: none; }
 .nav-mobile-link:hover            { color: rgba(245, 245, 245, 0.95); background: rgba(179, 139, 91, 0.06); }
 .nav-mobile-link.is-active        { color: var(--color-amber); }
-.nav-mobile-link--cta             { color: var(--color-amber); font-weight: 700; letter-spacing: 0.24em; }
-.nav-mobile-link--cta:hover       { background: rgba(179, 139, 91, 0.1); }
 
 /* ── Service jump links in nav ── */
 #svc-nav-links {
@@ -436,32 +434,6 @@ html, body {
   letter-spacing: 0.35em;
   text-transform: uppercase;
   opacity: 0.75;
-}
-
-/* ═══════════════════════════════════════
-   READY TO MAKE MAGIC — final CTA slide
-   ═══════════════════════════════════════ */
-.svc--cta .svc__name {
-  color: var(--color-amber);
-  letter-spacing: 0.06em;
-}
-
-.svc__tagline {
-  display: block;
-  font-family: var(--font-body);
-  font-weight: 300;
-  font-size: clamp(12px, 1.4vw, 18px);
-  color: rgba(245, 245, 245, 0.52);
-  letter-spacing: 0.1em;
-  margin-top: 10px;
-  will-change: opacity;
-}
-
-.svc__cta--hero {
-  font-size: 13px;
-  padding: 14px 40px;
-  margin-top: 30px;
-  border-radius: 3px;
 }
 
 /* ═══════════════════════════════════════

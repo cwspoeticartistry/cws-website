@@ -11,7 +11,6 @@
      3  = Websites
      ...
      7  = Other Services
-     8  = Ready to Make Magic (CTA)
    ============================================ */
 
 (function () {
@@ -40,21 +39,17 @@
   if (!logo || !hero || !services || !servicesNav || !overview ||
       !hamburger || !mobileMenu || !svcs.length) return;
 
-  /* CTA slide is never shown in overview — only when directly navigated to */
-  const nonCtaSvcs = svcs.filter(s => !s.classList.contains('svc--cta'));
-
   /* ── Service data ── */
   const SERVICES = [
-    { name: 'Corporate Identity',   sub: 'Logos · Brand Systems · Collateral', num: '01' },
-    { name: 'Websites',             sub: 'Design · Development · CMS',          num: '02' },
-    { name: 'Event Visuals',        sub: 'Branding · Flyers · Posters',         num: '03' },
-    { name: 'Music Artwork',        sub: 'Albums · Singles · EP Covers',        num: '04' },
-    { name: 'CRM Systems',          sub: 'Pipelines · Automation · Dashboards', num: '05' },
-    { name: 'Other Services',       sub: 'AR · Activations · Mockups',          num: '06' },
-    { name: 'Ready to Make Magic',  sub: '',                                     num: '07' },
+    { name: 'Corporate Identity', sub: 'Logos · Brand Systems · Collateral', num: '01' },
+    { name: 'Websites',           sub: 'Design · Development · CMS',          num: '02' },
+    { name: 'Event Visuals',      sub: 'Branding · Flyers · Posters',         num: '03' },
+    { name: 'Music Artwork',      sub: 'Albums · Singles · EP Covers',        num: '04' },
+    { name: 'CRM Systems',        sub: 'Pipelines · Automation · Dashboards', num: '05' },
+    { name: 'Other Services',     sub: 'AR · Activations · Mockups',          num: '06' },
   ];
 
-  const MAX_VP = 1 + SERVICES.length; // 8
+  const MAX_VP = 1 + SERVICES.length; // 7
 
   /* ── Initial states ── */
   gsap.set(services,            { opacity: 0 });
@@ -179,11 +174,6 @@
         gsap.to(nameEl, { fontSize: refName + 'px', duration: 0.55, ease: 'power2.out' });
         if (subEl) gsap.to(subEl, { fontSize: refSub + 'px', duration: 0.55, ease: 'power2.out' });
       } else if (d > 0) {
-        // CTA slide is never shown as an "ahead" blur — only when directly focused
-        if (svc.classList.contains('svc--cta')) {
-          gsap.to(svc, { opacity: 0, duration: 0.2 });
-          return;
-        }
         // Ahead: visible, progressively blurred and smaller
         const di = Math.min(d - 1, AHEAD_SCALE.length - 1);
         gsap.to(svc,    { filter: `blur(${AHEAD_BLUR_PX[di]}px)`, opacity: 1, duration: 0.55, ease: 'power2.out' });
@@ -227,7 +217,6 @@
   function startDrift() {
     stopDrift();
     svcs.forEach((svc, i) => {
-      if (svc.classList.contains('svc--cta')) return; // CTA slide never drifts
       const d = DRIFT[i] || DRIFT[DRIFT.length - 1];
       driftTweens.push(gsap.to(svc, {
         y: d.ampY * d.yDir, x: d.ampX * d.xDir,
@@ -333,16 +322,15 @@
       // Zoom camera back out to wide view
       gsap.to(overview, { x: 0, y: 0, scale: 1, duration: 0.65, ease: 'power3.out' });
       gsap.to(overview, { opacity: 1, duration: 0.3 });
-      // Only the real service nodes fade in — CTA slide stays hidden in overview
-      overviewEntryTween = gsap.to(nonCtaSvcs, {
+      overviewEntryTween = gsap.to(svcs, {
         opacity: 1,
         stagger: 0.055, duration: 0.5, ease: 'power2.out', delay: 0.2,
         onComplete: startDrift,
       });
     } else {
-      // From hero — scatter in fresh (CTA slide excluded)
+      // From hero — scatter in fresh
       gsap.to(overview, { opacity: 1, duration: 0.4 });
-      overviewEntryTween = gsap.to(nonCtaSvcs, {
+      overviewEntryTween = gsap.to(svcs, {
         opacity: 1, scale: 1, y: 0, x: 0,
         stagger: 0.07, duration: 0.6, ease: 'power2.out', delay: 0.15,
         onComplete: startDrift,
@@ -365,9 +353,6 @@
     detailCounter.textContent = SERVICES[idx].num + ' / 0' + SERVICES.length;
     updateNavActive(idx);
 
-    // CTA slide has no "more to scroll" — hide the scroll hint there, show it elsewhere
-    const isCTA = svcs[idx].classList.contains('svc--cta');
-    gsap.to(servicesScrollHint, { opacity: isCTA ? 0 : 1, duration: 0.3, delay: isCTA ? 0 : 0.45 });
 
     // Hide cards + CTA + remove focus class on previously focused service
     if (prevIdx >= 0) {
@@ -590,13 +575,12 @@
      ANCHOR MAP — id → service index
      ═══════════════════════════════════════ */
   const ANCHOR_MAP = {
-    'corporate-identity':  2,
-    'websites':            3,
-    'event-visuals':       4,
-    'music-artwork':       5,
-    'crm-systems':         6,
-    'other-services':      7,
-    'ready-to-make-magic': 8,
+    'corporate-identity': 2,
+    'websites':           3,
+    'event-visuals':      4,
+    'music-artwork':      5,
+    'crm-systems':        6,
+    'other-services':     7,
   };
 
   function seekToHash(hash) {
