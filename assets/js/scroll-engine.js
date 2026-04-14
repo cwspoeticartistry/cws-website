@@ -40,6 +40,27 @@
   if (!logo || !hero || !services || !servicesNav || !overview ||
       !hamburger || !mobileMenu || !svcs.length) return;
 
+  /* ── Mobile position overrides ──
+     On narrow screens (≤480px) percentage-based --sx/--sy positions can
+     push services too close to the nav bar (top) or scroll-hint (bottom),
+     and the horizontal spread can overlap on a 375px canvas.
+     These overrides remap each service to a safer mobile grid.       */
+  if (window.innerWidth <= 480) {
+    const mobilePos = [
+      { sx: '50%', sy: '32%' }, // Corporate Identity — centred, clear of nav
+      { sx: '72%', sy: '58%' }, // Websites
+      { sx: '28%', sy: '48%' }, // Event Visuals
+      { sx: '70%', sy: '38%' }, // Music Artwork
+      { sx: '36%', sy: '68%' }, // CRM Systems
+      { sx: '66%', sy: '22%' }, // Other Services
+    ];
+    svcs.forEach((svc, i) => {
+      if (!mobilePos[i]) return;
+      svc.style.setProperty('--sx', mobilePos[i].sx);
+      svc.style.setProperty('--sy', mobilePos[i].sy);
+    });
+  }
+
   /* ── Service data ── */
   const SERVICES = [
     { name: 'Corporate Identity', sub: 'Logos · Brand Systems · Collateral', num: '01' },
@@ -76,6 +97,10 @@
   function updateFromProgress(vp) {
     zoomTL.progress(Math.min(Math.max(vp, 0), 1));
     hero.style.pointerEvents = vp < 1 ? 'auto' : 'none';
+    // Logo has pointer-events:auto in CSS which overrides the parent hero's 'none'.
+    // Explicitly disable it once zoomed through so the invisible giant logo
+    // cannot block clicks on the nav bar beneath it.
+    logo.style.pointerEvents = vp < 1 ? 'auto' : 'none';
 
     if (vp < 1) {
       if (currentState !== 'hero') { currentState = 'hero'; currentSvcIdx = -1; enterHero(); }
