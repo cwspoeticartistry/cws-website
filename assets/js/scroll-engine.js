@@ -11,6 +11,7 @@
      3  = Websites
      ...
      7  = Other Services
+     8  = Ready to Make Magic (CTA)
    ============================================ */
 
 (function () {
@@ -37,12 +38,13 @@
 
   /* ── Service data ── */
   const SERVICES = [
-    { name: 'Corporate Identity', sub: 'Logos · Brand Systems · Collateral', num: '01' },
-    { name: 'Websites',           sub: 'Design · Development · CMS',          num: '02' },
-    { name: 'Event Visuals',      sub: 'Branding · Flyers · Posters',         num: '03' },
-    { name: 'Music Artwork',      sub: 'Albums · Singles · EP Covers',        num: '04' },
-    { name: 'CRM Systems',        sub: 'Pipelines · Automation · Dashboards', num: '05' },
-    { name: 'Other Services',     sub: 'AR · Activations · Mockups',          num: '06' },
+    { name: 'Corporate Identity',   sub: 'Logos · Brand Systems · Collateral', num: '01' },
+    { name: 'Websites',             sub: 'Design · Development · CMS',          num: '02' },
+    { name: 'Event Visuals',        sub: 'Branding · Flyers · Posters',         num: '03' },
+    { name: 'Music Artwork',        sub: 'Albums · Singles · EP Covers',        num: '04' },
+    { name: 'CRM Systems',          sub: 'Pipelines · Automation · Dashboards', num: '05' },
+    { name: 'Other Services',       sub: 'AR · Activations · Mockups',          num: '06' },
+    { name: 'Ready to Make Magic',  sub: '',                                     num: '07' },
   ];
 
   const MAX_VP = 1 + SERVICES.length; // 7
