@@ -1,0 +1,105 @@
+/* ============================================
+   CWS Poetic Artistry — Animation Styles
+   All keyframes and transition utilities
+   ============================================ */
+
+/* --- Logo Float (idle animation) --- */
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.01); }
+}
+
+.anim-float {
+  animation: float var(--animation-float-duration) ease-in-out infinite;
+}
+
+/* --- Fade In --- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.anim-fade-in {
+  animation: fadeIn var(--transition-medium) ease-out forwards;
+}
+
+/* --- Fade In Up --- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-fade-in-up {
+  animation: fadeInUp var(--transition-slow) ease-out forwards;
+}
+
+/* --- Scale In (logo zoom through) --- */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.anim-scale-in {
+  animation: scaleIn var(--transition-slow) ease-out forwards;
+}
+
+/* --- Pulse Glow (ambient logo glow) --- */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 40px rgba(179, 139, 91, 0.1); }
+  50% { box-shadow: 0 0 60px rgba(179, 139, 91, 0.25); }
+}
+
+.anim-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* --- Scroll Indicator Bounce --- */
+@keyframes scrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+.scroll-indicator {
+  animation: scrollBounce 2s ease-in-out infinite;
+}
+
+/* --- Star Twinkle --- */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* --- Hyperspace classes (applied via JS) --- */
+.hyperspace-active {
+  pointer-events: none;
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .anim-float,
+  .anim-pulse-glow,
+  .scroll-indicator {
+    animation: none;
+  }
+}

@@ -1,0 +1,267 @@
+/* ============================================
+   CWS Poetic Artistry — Component Styles
+   CENTRAL STYLE SHEET — single source of truth
+   All shared component styles live here.
+   ============================================ */
+
+/* --- Section (full viewport) --- */
+.section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* --- Container (centered content) --- */
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+  width: 100%;
+}
+
+/* --- Sub-container (content block) --- */
+.sub-container {
+  position: relative;
+}
+
+/* --- Navigation --- */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: var(--space-md) 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-medium);
+  background: linear-gradient(
+    to bottom,
+    rgba(35, 31, 32, 0.9) 0%,
+    rgba(35, 31, 32, 0) 100%
+  );
+}
+
+.nav--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nav .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.nav__links {
+  display: none;
+  list-style: none;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .nav__links {
+    display: flex;
+  }
+}
+
+.nav__link {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 400;
+  color: var(--color-white);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: color var(--transition-fast);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: var(--space-xs) 0;
+}
+
+.nav__link:hover,
+.nav__link--active {
+  color: var(--color-amber);
+}
+
+.nav__link:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 4px;
+}
+
+/* --- Mobile Menu Toggle --- */
+.nav__burger {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs);
+}
+
+@media (min-width: 768px) {
+  .nav__burger {
+    display: none;
+  }
+}
+
+.nav__burger-line {
+  width: 24px;
+  height: 2px;
+  background-color: var(--color-white);
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+/* --- Mobile Menu Overlay --- */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background-color: rgba(35, 31, 32, 0.97);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-medium);
+}
+
+.mobile-menu--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-menu__links {
+  list-style: none;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.mobile-menu__link {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
+  color: var(--color-white);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color var(--transition-fast);
+}
+
+.mobile-menu__link:hover {
+  color: var(--color-amber);
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-small);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  border: 2px solid transparent;
+}
+
+.btn--primary {
+  background-color: var(--color-amber);
+  color: var(--color-bg);
+  border-color: var(--color-amber);
+}
+
+.btn--primary:hover {
+  background-color: transparent;
+  color: var(--color-amber);
+  box-shadow: var(--glow-amber);
+}
+
+.btn--secondary {
+  background-color: transparent;
+  color: var(--color-teal);
+  border-color: var(--color-teal);
+}
+
+.btn--secondary:hover {
+  background-color: var(--color-teal);
+  color: var(--color-bg);
+  box-shadow: var(--glow-teal);
+}
+
+/* --- Scroll Indicator --- */
+.scroll-indicator {
+  position: absolute;
+  bottom: var(--space-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-white);
+  opacity: 0.5;
+  transition: opacity var(--transition-medium);
+}
+
+.scroll-indicator__text {
+  font-family: var(--font-body);
+  font-size: var(--text-tiny);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.scroll-indicator__arrow {
+  width: 20px;
+  height: 20px;
+  border-right: 2px solid var(--color-white);
+  border-bottom: 2px solid var(--color-white);
+  transform: rotate(45deg);
+}
+
+/* --- Service Label (floating in space) --- */
+.service-label {
+  position: absolute;
+  text-align: center;
+  cursor: pointer;
+  transition: transform var(--transition-medium);
+}
+
+.service-label__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
+  color: var(--color-pure-white);
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(179, 139, 91, 0.3);
+  transition: text-shadow var(--transition-fast);
+}
+
+.service-label:hover .service-label__title {
+  text-shadow: 0 0 40px rgba(179, 139, 91, 0.6);
+}
+
+.service-label__subtitle {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  color: var(--color-white);
+  opacity: 0.7;
+  margin-top: var(--space-xs);
+}

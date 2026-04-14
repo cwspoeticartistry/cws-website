@@ -1,0 +1,75 @@
+/* ============================================
+   CWS Poetic Artistry — Design Tokens
+   Source of truth: website/design-system.md
+   ============================================ */
+
+:root {
+  /* --- Colors --- */
+  --color-navy: #0a1628;
+  --color-amber: #B38B5B;
+  --color-teal: #497B7C;
+  --color-bg: #231f20;
+  --color-surface: #2a2627;
+  --color-border: #3a3536;
+  --color-white: #f5f5f5;
+  --color-pure-white: #ffffff;
+
+  /* --- Typography --- */
+  --font-heading: 'Anton', sans-serif;
+  --font-body: 'Lato', sans-serif;
+
+  /* Font sizes — mobile first (default) */
+  --text-display: 40px;
+  --text-h1: 32px;
+  --text-h2: 24px;
+  --text-h3: 20px;
+  --text-body: 16px;
+  --text-small: 14px;
+  --text-tiny: 11px;
+
+  /* Line heights */
+  --lh-heading: 1.2;
+  --lh-body: 1.6;
+
+  /* Letter spacing */
+  --ls-heading: 0.05em;
+  --ls-body: normal;
+
+  /* --- Spacing (4px base) --- */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+  --space-5xl: 128px;
+
+  /* --- Layout --- */
+  --container-max: 1200px;
+
+  /* --- Transitions --- */
+  --transition-fast: 150ms ease-out;
+  --transition-medium: 300ms ease-in-out;
+  --transition-slow: 600ms cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* --- Animation --- */
+  --animation-float-duration: 4s;
+  --animation-hyperspace-duration: 800ms;
+
+  /* --- Effects --- */
+  --glow-amber: 0 0 40px rgba(179, 139, 91, 0.15);
+  --glow-teal: 0 0 30px rgba(73, 123, 124, 0.12);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Desktop overrides */
+@media (min-width: 1024px) {
+  :root {
+    --text-display: 72px;
+    --text-h1: 48px;
+    --text-h2: 36px;
+    --text-h3: 24px;
+  }
+}
