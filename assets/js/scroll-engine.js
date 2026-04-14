@@ -40,6 +40,9 @@
   if (!logo || !hero || !services || !servicesNav || !overview ||
       !hamburger || !mobileMenu || !svcs.length) return;
 
+  /* CTA slide is never shown in overview — only when directly navigated to */
+  const nonCtaSvcs = svcs.filter(s => !s.classList.contains('svc--cta'));
+
   /* ── Service data ── */
   const SERVICES = [
     { name: 'Corporate Identity',   sub: 'Logos · Brand Systems · Collateral', num: '01' },
@@ -176,6 +179,11 @@
         gsap.to(nameEl, { fontSize: refName + 'px', duration: 0.55, ease: 'power2.out' });
         if (subEl) gsap.to(subEl, { fontSize: refSub + 'px', duration: 0.55, ease: 'power2.out' });
       } else if (d > 0) {
+        // CTA slide is never shown as an "ahead" blur — only when directly focused
+        if (svc.classList.contains('svc--cta')) {
+          gsap.to(svc, { opacity: 0, duration: 0.2 });
+          return;
+        }
         // Ahead: visible, progressively blurred and smaller
         const di = Math.min(d - 1, AHEAD_SCALE.length - 1);
         gsap.to(svc,    { filter: `blur(${AHEAD_BLUR_PX[di]}px)`, opacity: 1, duration: 0.55, ease: 'power2.out' });
@@ -195,7 +203,10 @@
   function resetFocusState() {
     svcs.forEach(svc => {
       gsap.set(svc, { clearProps: 'filter' });
-      gsap.set([svc.querySelector('.svc__name'), svc.querySelector('.svc__sub')], { clearProps: 'fontSize' });
+      gsap.set(
+        [svc.querySelector('.svc__name'), svc.querySelector('.svc__sub')].filter(Boolean),
+        { clearProps: 'fontSize' }
+      );
     });
   }
 
@@ -216,6 +227,7 @@
   function startDrift() {
     stopDrift();
     svcs.forEach((svc, i) => {
+      if (svc.classList.contains('svc--cta')) return; // CTA slide never drifts
       const d = DRIFT[i] || DRIFT[DRIFT.length - 1];
       driftTweens.push(gsap.to(svc, {
         y: d.ampY * d.yDir, x: d.ampX * d.xDir,
@@ -286,7 +298,10 @@
       gsap.killTweensOf(s.querySelector('.svc__name'));
       gsap.killTweensOf(s.querySelector('.svc__sub'));
       gsap.set(s, { scale: 1, opacity: 1, x: 0, y: 0, clearProps: 'filter' });
-      gsap.set([s.querySelector('.svc__name'), s.querySelector('.svc__sub')], { clearProps: 'fontSize' });
+      gsap.set(
+        [s.querySelector('.svc__name'), s.querySelector('.svc__sub')].filter(Boolean),
+        { clearProps: 'fontSize' }
+      );
       s.style.translate = '';
     });
     services.style.pointerEvents = 'none';
@@ -318,15 +333,16 @@
       // Zoom camera back out to wide view
       gsap.to(overview, { x: 0, y: 0, scale: 1, duration: 0.65, ease: 'power3.out' });
       gsap.to(overview, { opacity: 1, duration: 0.3 });
-      overviewEntryTween = gsap.to(svcs, {
+      // Only the real service nodes fade in — CTA slide stays hidden in overview
+      overviewEntryTween = gsap.to(nonCtaSvcs, {
         opacity: 1,
         stagger: 0.055, duration: 0.5, ease: 'power2.out', delay: 0.2,
         onComplete: startDrift,
       });
     } else {
-      // From hero — scatter in fresh
+      // From hero — scatter in fresh (CTA slide excluded)
       gsap.to(overview, { opacity: 1, duration: 0.4 });
-      overviewEntryTween = gsap.to(svcs, {
+      overviewEntryTween = gsap.to(nonCtaSvcs, {
         opacity: 1, scale: 1, y: 0, x: 0,
         stagger: 0.07, duration: 0.6, ease: 'power2.out', delay: 0.15,
         onComplete: startDrift,
@@ -348,6 +364,10 @@
     // Update counter + nav active state
     detailCounter.textContent = SERVICES[idx].num + ' / 0' + SERVICES.length;
     updateNavActive(idx);
+
+    // CTA slide has no "more to scroll" — hide the scroll hint there, show it elsewhere
+    const isCTA = svcs[idx].classList.contains('svc--cta');
+    gsap.to(servicesScrollHint, { opacity: isCTA ? 0 : 1, duration: 0.3, delay: isCTA ? 0 : 0.45 });
 
     // Hide cards + CTA + remove focus class on previously focused service
     if (prevIdx >= 0) {

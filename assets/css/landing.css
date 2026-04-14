@@ -65,7 +65,7 @@ html, body {
   opacity: 0.68;
   letter-spacing: 0.06em;
   will-change: opacity, transform;
-  margin-top: -4px;
+  margin-top: -18px; /* tight grouping directly under logo */
 }
 
 /* Scroll hint — inside #hero, fades with hero during zoom.
