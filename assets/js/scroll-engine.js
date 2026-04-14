@@ -36,6 +36,10 @@
   const svcCards           = svcs.map(s => Array.from(s.querySelectorAll('.svc__card')));
   const svcCtas            = svcs.map(s => s.querySelector('.svc__cta'));
 
+  /* ── Guard — bail out if required DOM is missing (e.g. non-landing pages) ── */
+  if (!logo || !hero || !services || !servicesNav || !overview ||
+      !hamburger || !mobileMenu || !svcs.length) return;
+
   /* ── Service data ── */
   const SERVICES = [
     { name: 'Corporate Identity',   sub: 'Logos · Brand Systems · Collateral', num: '01' },
@@ -47,7 +51,7 @@
     { name: 'Ready to Make Magic',  sub: '',                                     num: '07' },
   ];
 
-  const MAX_VP = 1 + SERVICES.length; // 7
+  const MAX_VP = 1 + SERVICES.length; // 8
 
   /* ── Initial states ── */
   gsap.set(services,            { opacity: 0 });
@@ -108,8 +112,21 @@
     const vpH = window.innerHeight;
     const sx  = parseFloat(svc.style.getPropertyValue('--sx')) / 100;
     const sy  = parseFloat(svc.style.getPropertyValue('--sy')) / 100;
-    const ciX = sx * vpW;
-    const ciY = sy * vpH;
+
+    // Read any GSAP x/y residuals left by drift tweens — these offset the element
+    // from its declared --sx/--sy position in overview space.
+    const ex  = parseFloat(gsap.getProperty(svc, 'x')) || 0;
+    const ey  = parseFloat(gsap.getProperty(svc, 'y')) || 0;
+
+    // Read any CSS translate residuals left by mouse parallax.
+    const tr  = (svc.style.translate || '').match(/([-\d.]+)/g) || [];
+    const px  = tr[0] ? parseFloat(tr[0]) : 0;
+    const py  = tr[1] ? parseFloat(tr[1]) : 0;
+
+    // True element center in overview coordinate space (accounts for all offsets)
+    const ciX = sx * vpW + ex + px;
+    const ciY = sy * vpH + ey + py;
+
     const cx  = vpW / 2;
     const cy  = vpH / 2;
     // After scaling from center, the point lands at:
@@ -157,19 +174,19 @@
         // Focused: sharp, full reference size
         gsap.to(svc,    { filter: 'blur(0px)', opacity: 1, duration: 0.45, ease: 'power2.out' });
         gsap.to(nameEl, { fontSize: refName + 'px', duration: 0.55, ease: 'power2.out' });
-        gsap.to(subEl,  { fontSize: refSub  + 'px', duration: 0.55, ease: 'power2.out' });
+        if (subEl) gsap.to(subEl, { fontSize: refSub + 'px', duration: 0.55, ease: 'power2.out' });
       } else if (d > 0) {
         // Ahead: visible, progressively blurred and smaller
         const di = Math.min(d - 1, AHEAD_SCALE.length - 1);
         gsap.to(svc,    { filter: `blur(${AHEAD_BLUR_PX[di]}px)`, opacity: 1, duration: 0.55, ease: 'power2.out' });
         gsap.to(nameEl, { fontSize: refName * AHEAD_SCALE[di] + 'px', duration: 0.55, ease: 'power2.out' });
-        gsap.to(subEl,  { fontSize: refSub  * AHEAD_SCALE[di] + 'px', duration: 0.55, ease: 'power2.out' });
+        if (subEl) gsap.to(subEl, { fontSize: refSub * AHEAD_SCALE[di] + 'px', duration: 0.55, ease: 'power2.out' });
       } else {
         // Behind (d < 0): fade out quickly so visible services don't snap to invisible.
         // When scrolling back UP, these were previously visible as "ahead" services —
         // a fast fade (not instant) makes the transition look intentional.
         gsap.to(svc, { opacity: 0, filter: 'blur(0px)', duration: 0.25, ease: 'power1.in' });
-        gsap.set([nameEl, subEl], { clearProps: 'fontSize' });
+        gsap.set([nameEl, subEl].filter(Boolean), { clearProps: 'fontSize' });
       }
     });
   }
@@ -246,7 +263,10 @@
   function clearFocusedClass() {
     svcs.forEach(s => {
       s.classList.remove('is-focused');
-      gsap.set([s.querySelector('.svc__name'), s.querySelector('.svc__sub')], { clearProps: 'fontSize' });
+      gsap.set(
+        [s.querySelector('.svc__name'), s.querySelector('.svc__sub')].filter(Boolean),
+        { clearProps: 'fontSize' }
+      );
     });
   }
 
@@ -547,7 +567,33 @@
   }, { passive: true });
 
   /* ═══════════════════════════════════════
+     ANCHOR MAP — id → service index
+     ═══════════════════════════════════════ */
+  const ANCHOR_MAP = {
+    'corporate-identity':  2,
+    'websites':            3,
+    'event-visuals':       4,
+    'music-artwork':       5,
+    'crm-systems':         6,
+    'other-services':      7,
+    'ready-to-make-magic': 8,
+  };
+
+  function seekToHash(hash) {
+    const id  = (hash || '').replace('#', '');
+    const vp  = ANCHOR_MAP[id];
+    if (vp !== undefined) seekTo(vp);
+  }
+
+  /* On load: if URL already has a hash, navigate there */
+  if (window.location.hash) seekToHash(window.location.hash);
+
+  /* On hash change (back/forward navigation) */
+  window.addEventListener('hashchange', () => seekToHash(window.location.hash));
+
+  /* ═══════════════════════════════════════
      DESKTOP NAV LINKS — click to jump directly to service
+     Prevent default scroll-to-anchor; use camera animation instead.
      ═══════════════════════════════════════ */
   navLinks.forEach((link, i) => {
     link.addEventListener('click', e => {
