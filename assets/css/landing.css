@@ -409,14 +409,16 @@ html, body {
   right: calc(-1 * clamp(58px, 9vw, 88px));
 }
 
-/* Card 2 — bottom left, beside the sub-text */
+/* Card 2 — above the service name on the left
+   Floats above the .svc container so it never stacks with --cta */
 .svc__card--bl {
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: calc(100% + 14px);
   left: calc(-1 * clamp(58px, 9vw, 88px));
+  top: auto;
+  transform: none;
 }
 
-/* Card 3 — to the left of "Click here to view" */
+/* Card 3 — bottom left, beside the CTA */
 .svc__card--cta {
   bottom: 0;
   left: calc(-1 * clamp(58px, 9vw, 88px));
@@ -513,9 +515,9 @@ html, body {
   .svc__card { width: clamp(36px, 9vw, 52px); }
 
   /* Cards tighter offset on mobile */
-  .svc__card--tr  { right: calc(-1 * clamp(42px, 10vw, 58px)); }
-  .svc__card--bl  { left:  calc(-1 * clamp(42px, 10vw, 58px)); }
-  .svc__card--cta { left:  calc(-1 * clamp(42px, 10vw, 58px)); }
+  .svc__card--tr  { right:  calc(-1 * clamp(42px, 10vw, 58px)); }
+  .svc__card--bl  { left:   calc(-1 * clamp(42px, 10vw, 58px)); bottom: calc(100% + 10px); }
+  .svc__card--cta { left:   calc(-1 * clamp(42px, 10vw, 58px)); }
 
   /* CTA smaller */
   .svc__cta {
