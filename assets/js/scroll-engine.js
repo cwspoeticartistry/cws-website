@@ -149,12 +149,15 @@
   const AHEAD_BLUR_PX = [3,  7,  13,  20,  30];
   const AHEAD_SCALE   = [0.80, 0.60, 0.40, 0.20, 0.10];
 
-  /* Reference sizes mirror is-focused CSS: clamp(32px, 5.5vw, 72px) / clamp(9px, 0.85vw, 12px) */
+  /* Reference sizes: the VISUAL target sizes divided by SCALE so that after the camera
+     zoom is applied (scale 1.8 desktop / 1.5 mobile) the rendered size matches intent.
+     Without dividing, the camera multiplies fontSize * SCALE → text overflows viewport. */
   function getRefSize() {
-    const vw = window.innerWidth;
+    const vw    = window.innerWidth;
+    const scale = vw < 768 ? 1.5 : 1.8;
     return {
-      name: Math.min(Math.max(32, 5.5 * vw / 100), 72),
-      sub:  Math.min(Math.max(9,  0.85 * vw / 100), 12),
+      name: Math.min(Math.max(32, 5.5 * vw / 100), 72) / scale,
+      sub:  Math.min(Math.max(9,  0.85 * vw / 100), 12) / scale,
     };
   }
 

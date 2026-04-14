@@ -331,7 +331,16 @@ html, body {
 .svc[data-depth="5"] .svc__sub { font-size: clamp(5px,  0.40vw,  7px); opacity: 0.18; }
 
 /* ── Focused state — font-size owned by GSAP ── */
-.svc.is-focused .svc__name { opacity: 1   !important; }
+/* max-width constrains the element in overview-space; vw is always viewport-relative
+   even inside a transformed parent, so 44vw element * 1.8 scale ≈ 79vw visual. */
+.svc.is-focused {
+  max-width: 44vw;
+}
+.svc.is-focused .svc__name {
+  opacity: 1 !important;
+  white-space: normal;
+  word-break: break-word;
+}
 .svc.is-focused .svc__sub  { opacity: 0.6 !important; }
 
 /* ── CTA button inside each .svc (zooms with camera) ── */
@@ -486,6 +495,9 @@ html, body {
     padding: 7px 14px;
     letter-spacing: 0.08em;
   }
+
+  /* Focused service max-width: element space; visual = 54vw * 1.5 ≈ 81vw */
+  .svc.is-focused { max-width: 54vw; }
 
   /* Service names */
   .svc[data-depth="1"] .svc__name { font-size: clamp(28px, 8vw, 44px); }
