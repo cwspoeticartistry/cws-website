@@ -1,8 +1,8 @@
 /* ============================================
    CWS Poetic Artistry — Scroll Engine
-   Camera flies through space toward each service.
-   Past services fly off-screen like the logo.
-   Dynamic blur: sharp on focus, heavy behind you.
+   "Approach Stage" architecture — no camera transform.
+   Active services come to the viewer.
+   Centering is structural: position:fixed + GSAP xPercent/yPercent.
 
    vTarget integers: 0 → MAX_VP
      0  = hero
@@ -36,15 +36,13 @@
   const svcCards           = svcs.map(s => Array.from(s.querySelectorAll('.svc__card')));
   const svcCtas            = svcs.map(s => s.querySelector('.svc__cta'));
 
-  /* ── Guard — bail out if required DOM is missing (e.g. non-landing pages) ── */
+  /* ── Guard — bail out if required DOM is missing ── */
   if (!logo || !hero || !services || !servicesNav || !overview ||
       !hamburger || !mobileMenu || !svcs.length) return;
 
   /* ── Mobile position overrides ──
      On narrow screens (≤480px) percentage-based --sx/--sy positions can
-     push services too close to the nav bar (top) or scroll-hint (bottom),
-     and the horizontal spread can overlap on a 375px canvas.
-     These overrides remap each service to a safer mobile grid.       */
+     push services too close to the nav bar or scroll-hint.        */
   if (window.innerWidth <= 480) {
     const mobilePos = [
       { sx: '50%', sy: '32%' }, // Corporate Identity — centred, clear of nav
@@ -73,15 +71,17 @@
 
   const MAX_VP = 1 + SERVICES.length; // 7
 
-  /* ── Initial states ── */
-  gsap.set(services,            { opacity: 0 });
-  gsap.set(servicesNav,         { opacity: 0 });
-  gsap.set(servicesScrollHint,  { opacity: 0 });
-  gsap.set(overview,            { opacity: 0 });
-  gsap.set(svcs,                { opacity: 0, scale: 0.85, y: 18 });
-  gsap.set(detail,              { opacity: 0 });
-  svcCards.forEach(c   => gsap.set(c,   { opacity: 0 }));
-  svcCtas.forEach(cta  => { if (cta) gsap.set(cta, { opacity: 0, y: 8 }); });
+  /* ── Initial states ──
+     xPercent/yPercent are set once and owned by GSAP from here forward.
+     They survive every subsequent tween — centering is never re-read from CSS. */
+  gsap.set(services,           { opacity: 0 });
+  gsap.set(servicesNav,        { opacity: 0 });
+  gsap.set(servicesScrollHint, { opacity: 0 });
+  gsap.set(overview,           { opacity: 0 });
+  gsap.set(svcs,               { xPercent: -50, yPercent: -50, opacity: 0, scale: 1, x: 0, y: 0 });
+  gsap.set(detail,             { opacity: 0 });
+  svcCards.forEach(c  => gsap.set(c,   { opacity: 0 }));
+  svcCtas.forEach(cta => { if (cta) gsap.set(cta, { opacity: 0, y: 8 }); });
 
   /* ── Hero zoom timeline ── */
   const zoomTL = gsap.timeline({ paused: true });
@@ -97,9 +97,6 @@
   function updateFromProgress(vp) {
     zoomTL.progress(Math.min(Math.max(vp, 0), 1));
     hero.style.pointerEvents = vp < 1 ? 'auto' : 'none';
-    // Logo has pointer-events:auto in CSS which overrides the parent hero's 'none'.
-    // Explicitly disable it once zoomed through so the invisible giant logo
-    // cannot block clicks on the nav bar beneath it.
     logo.style.pointerEvents = vp < 1 ? 'auto' : 'none';
 
     if (vp < 1) {
@@ -127,110 +124,49 @@
   }
 
   /* ═══════════════════════════════════════
-     CAMERA — zoom overview so target svc is centered
-     overview is position:absolute inset:0 (= 100vw × 100vh)
-     transform-origin defaults to 50% 50% (viewport center)
+     ENTER / EXIT FOCUS — approach stage
+     No camera. Each service comes to the viewer.
+     enterFocus: service grows from its overview direction toward center.
+     exitFocus:  service flies past (forward) or recedes (back).
      ═══════════════════════════════════════ */
-  function cameraToService(svc, scale) {
-    const vpW = window.innerWidth;
-    const vpH = window.innerHeight;
-    const sx  = parseFloat(svc.style.getPropertyValue('--sx')) / 100;
-    const sy  = parseFloat(svc.style.getPropertyValue('--sy')) / 100;
 
-    // Read any GSAP x/y residuals left by drift tweens — these offset the element
-    // from its declared --sx/--sy position in overview space.
-    const ex  = parseFloat(gsap.getProperty(svc, 'x')) || 0;
-    const ey  = parseFloat(gsap.getProperty(svc, 'y')) || 0;
+  function enterFocus(idx) {
+    const svc = svcs[idx];
 
-    // Read any CSS translate residuals left by mouse parallax.
-    const tr  = (svc.style.translate || '').match(/([-\d.]+)/g) || [];
-    const px  = tr[0] ? parseFloat(tr[0]) : 0;
-    const py  = tr[1] ? parseFloat(tr[1]) : 0;
+    // Pin to viewport center via CSS (position:fixed; left:50%; top:50%)
+    svc.classList.add('is-focused');
 
-    // True element center in overview coordinate space (accounts for all offsets)
-    const ciX = sx * vpW + ex + px;
-    const ciY = sy * vpH + ey + py;
+    // Approach vector: start from the direction the service occupies in the overview
+    const cs = getComputedStyle(svc);
+    const sx = parseFloat(cs.getPropertyValue('--sx')) || 50;
+    const sy = parseFloat(cs.getPropertyValue('--sy')) || 50;
+    const ax = (sx - 50) * 0.08 * window.innerWidth  / 100;
+    const ay = (sy - 50) * 0.08 * window.innerHeight / 100;
 
-    const cx  = vpW / 2;
-    const cy  = vpH / 2;
-    // After scaling from center, the point lands at:
-    const ax = cx + (ciX - cx) * scale;
-    const ay = cy + (ciY - cy) * scale;
-    // Translate to pull it back to viewport center:
-    return { x: cx - ax, y: cy - ay, scale };
-  }
-
-  /* ═══════════════════════════════════════
-     FOCUS STATE — blur + size relative to focused index
-     Past services (d < 0): off screen immediately
-     Focused (d = 0): no blur, full CI reference size
-     Ahead  (d > 0): progressive blur + smaller text
-       d=1 → 20% blur, 80% size
-       d=2 → 40% blur, 60% size
-       d=3 → 60% blur, 40% size
-       d=4 → 80% blur, 20% size
-       d=5 → 100% blur, 10% size
-     ═══════════════════════════════════════ */
-  //                    d:  1    2    3    4    5
-  const AHEAD_BLUR_PX = [3,  7,  13,  20,  30];
-  const AHEAD_SCALE   = [0.80, 0.60, 0.40, 0.20, 0.10];
-
-  /* Reference sizes: the VISUAL target sizes divided by SCALE so that after the camera
-     zoom is applied (scale 1.8 desktop / 1.5 mobile) the rendered size matches intent.
-     Without dividing, the camera multiplies fontSize * SCALE → text overflows viewport. */
-  function getRefSize() {
-    const vw    = window.innerWidth;
-    const scale = vw < 768 ? 1.5 : 1.8;
-    return {
-      name: Math.min(Math.max(32, 5.5 * vw / 100), 72) / scale,
-      sub:  Math.min(Math.max(9,  0.85 * vw / 100), 12) / scale,
-    };
-  }
-
-  /* Apply blur + font-size to every service based on distance from focused index.
-     prevIdx is excluded — its fly-off animation is handled separately by enterService. */
-  function setFocusState(idx, prevIdx) {
-    const { name: refName, sub: refSub } = getRefSize();
-    svcs.forEach((svc, i) => {
-      if (i === prevIdx) return;
-      const d      = i - idx;
-      const nameEl = svc.querySelector('.svc__name');
-      const subEl  = svc.querySelector('.svc__sub');
-
-      if (d === 0) {
-        // Focused: sharp, full reference size
-        gsap.to(svc,    { filter: 'blur(0px)', opacity: 1, duration: 0.45, ease: 'power2.out' });
-        gsap.to(nameEl, { fontSize: refName + 'px', duration: 0.55, ease: 'power2.out' });
-        if (subEl) gsap.to(subEl, { fontSize: refSub + 'px', duration: 0.55, ease: 'power2.out' });
-      } else if (d > 0) {
-        // Ahead: visible, progressively blurred and smaller
-        const di = Math.min(d - 1, AHEAD_SCALE.length - 1);
-        gsap.to(svc,    { filter: `blur(${AHEAD_BLUR_PX[di]}px)`, opacity: 1, duration: 0.55, ease: 'power2.out' });
-        gsap.to(nameEl, { fontSize: refName * AHEAD_SCALE[di] + 'px', duration: 0.55, ease: 'power2.out' });
-        if (subEl) gsap.to(subEl, { fontSize: refSub * AHEAD_SCALE[di] + 'px', duration: 0.55, ease: 'power2.out' });
-      } else {
-        // Behind (d < 0): fade out quickly so visible services don't snap to invisible.
-        // When scrolling back UP, these were previously visible as "ahead" services —
-        // a fast fade (not instant) makes the transition look intentional.
-        gsap.to(svc, { opacity: 0, filter: 'blur(0px)', duration: 0.25, ease: 'power1.in' });
-        gsap.set([nameEl, subEl].filter(Boolean), { clearProps: 'fontSize' });
-      }
+    gsap.set(svc, { x: ax, y: ay, scale: 0.4, opacity: 0, filter: 'blur(10px)' });
+    gsap.to(svc, {
+      x: 0, y: 0, scale: 1, opacity: 1, filter: 'blur(0px)',
+      duration: 0.85, delay: 0.2, ease: 'power2.out',
     });
   }
 
-  /* Reset all inline overrides → CSS data-depth rules take back over (used in overview/hero) */
-  function resetFocusState() {
-    svcs.forEach(svc => {
-      gsap.set(svc, { clearProps: 'filter' });
-      gsap.set(
-        [svc.querySelector('.svc__name'), svc.querySelector('.svc__sub')].filter(Boolean),
-        { clearProps: 'fontSize' }
-      );
+  function exitFocus(idx, dir) {
+    const svc = svcs[idx];
+    gsap.to(svc, {
+      scale:   dir === 'forward' ? 4.0 : 0.4,
+      opacity: 0,
+      filter:  'blur(8px)',
+      duration: 0.55,
+      ease:    'power2.in',
+      onComplete: () => {
+        svc.classList.remove('is-focused');
+        gsap.set(svc, { x: 0, y: 0, scale: 1, opacity: 0, clearProps: 'filter' });
+      },
     });
   }
 
   /* ═══════════════════════════════════════
-     GALAXY DRIFT — floating in space
+     GALAXY DRIFT — floating in space (overview only)
      ═══════════════════════════════════════ */
   const DRIFT = [
     { ampY: 10, ampX:  4, dur: 3.8, yDir: -1, xDir:  1 },
@@ -286,40 +222,29 @@
     hamburger.classList.remove('is-open');
   }
 
+  /* ── Remove is-focused from all services ── */
+  function clearFocusedClass() {
+    svcs.forEach(s => s.classList.remove('is-focused'));
+  }
+
   /* ═══════════════════════════════════════
      TRANSITIONS
      ═══════════════════════════════════════ */
-
-  function clearFocusedClass() {
-    svcs.forEach(s => {
-      s.classList.remove('is-focused');
-      gsap.set(
-        [s.querySelector('.svc__name'), s.querySelector('.svc__sub')].filter(Boolean),
-        { clearProps: 'fontSize' }
-      );
-    });
-  }
 
   function enterHero() {
     stopDrift();
     clearFocusedClass();
     hideAllCards();
-    gsap.to(detail,              { opacity: 0, duration: 0.3 });
+    gsap.to(detail,             { opacity: 0, duration: 0.3 });
     gsap.to(servicesScrollHint, { opacity: 0, duration: 0.2 });
-    gsap.to(overview, { x: 0, y: 0, scale: 1, duration: 0.5, ease: 'power2.out' });
-    gsap.to(services, { opacity: 0, duration: 0.4 });
+    gsap.to(services,           { opacity: 0, duration: 0.4 });
     updateNavActive(-1);
     closeMobileMenu();
-    // Reset all individual svc transforms (including drift residuals + parallax)
     gsap.killTweensOf(svcs);
     svcs.forEach(s => {
       gsap.killTweensOf(s.querySelector('.svc__name'));
       gsap.killTweensOf(s.querySelector('.svc__sub'));
       gsap.set(s, { scale: 1, opacity: 1, x: 0, y: 0, clearProps: 'filter' });
-      gsap.set(
-        [s.querySelector('.svc__name'), s.querySelector('.svc__sub')].filter(Boolean),
-        { clearProps: 'fontSize' }
-      );
       s.style.translate = '';
     });
     services.style.pointerEvents = 'none';
@@ -341,15 +266,12 @@
     closeMobileMenu();
 
     if (fromState === 'service') {
-      // Reset any individually-transformed svcs (flown-past, shrunk, drift, parallax)
+      // Kill any in-flight focus/exit tweens; reset everything to constellation state
       gsap.killTweensOf(svcs);
       svcs.forEach(s => {
-        gsap.set(s, { scale: 1, opacity: 0, x: 0, y: 0 });
+        gsap.set(s, { scale: 1, opacity: 0, x: 0, y: 0, clearProps: 'filter' });
         s.style.translate = '';
       });
-      resetFocusState();
-      // Zoom camera back out to wide view
-      gsap.to(overview, { x: 0, y: 0, scale: 1, duration: 0.65, ease: 'power3.out' });
       gsap.to(overview, { opacity: 1, duration: 0.3 });
       overviewEntryTween = gsap.to(svcs, {
         opacity: 1,
@@ -374,109 +296,40 @@
     services.style.pointerEvents = 'auto';
     detail.style.pointerEvents   = 'auto';
 
-    const SCALE = window.innerWidth < 768 ? 1.5 : 1.8;
-    const cam   = cameraToService(svcs[idx], SCALE);
-    const goingForward = prevIdx >= 0 && idx > prevIdx;
+    const dir = (prevIdx >= 0 && idx > prevIdx) ? 'forward' : 'back';
 
-    // Update counter + nav active state
     detailCounter.textContent = SERVICES[idx].num + ' / 0' + SERVICES.length;
     updateNavActive(idx);
 
-
-    // Hide cards + CTA + remove focus class on previously focused service
-    if (prevIdx >= 0) {
-      gsap.to(svcCards[prevIdx], { opacity: 0, y: 8, duration: 0.2 });
-      if (svcCtas[prevIdx]) gsap.to(svcCtas[prevIdx], { opacity: 0, y: 8, duration: 0.15 });
-      svcs[prevIdx].classList.remove('is-focused');
-    }
-
-    // Reset ALL non-participating services — clear drift/parallax residuals.
-    // Opacity is NOT set here; setFocusState owns opacity for all services.
+    // Fade out all non-participating services immediately
     svcs.forEach((s, i) => {
-      if (i !== prevIdx && i !== idx) {
+      if (i !== idx && i !== prevIdx) {
         gsap.killTweensOf(s);
-        gsap.killTweensOf(s.querySelector('.svc__name'));
-        gsap.killTweensOf(s.querySelector('.svc__sub'));
-        gsap.set(s, { scale: 1, x: 0, y: 0 });
+        gsap.to(s, { opacity: 0, duration: 0.3 });
         s.style.translate = '';
       }
     });
 
-    // Ensure target svc is exactly at its declared --sx/--sy position
-    gsap.killTweensOf(svcs[idx]);
-    gsap.killTweensOf(svcs[idx].querySelector('.svc__name'));
-    gsap.killTweensOf(svcs[idx].querySelector('.svc__sub'));
-    gsap.set(svcs[idx], { scale: 1, opacity: 1, x: 0, y: 0 });
-    svcs[idx].style.translate = '';
-
-    // Apply focused font size — triggers CSS transition so it grows as camera arrives
-    svcs[idx].classList.add('is-focused');
-
-    // Set blur + size for all services relative to this focal point
-    setFocusState(idx, prevIdx);
-
-    /* ── From overview: camera flies toward focused service ── */
-    if (fromState === 'overview' || prevIdx < 0) {
-      gsap.to(overview, {
-        x: cam.x, y: cam.y, scale: cam.scale,
-        duration: 0.80, ease: 'power3.out',
-      });
-      gsap.to(detail, { opacity: 1, duration: 0.35, delay: 0.58 });
-      gsap.fromTo(svcCards[idx],
-        { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, stagger: 0.09, duration: 0.45, ease: 'power2.out', delay: 0.65 }
-      );
-      if (svcCtas[idx]) gsap.fromTo(svcCtas[idx],
-        { opacity: 0, y: 8 },
-        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', delay: 0.82 }
-      );
-
-    /* ── Forward: previous service flies past camera, next zooms in ── */
-    } else if (goingForward) {
-      gsap.killTweensOf(svcs[prevIdx]);
-      // Previous service blows past camera (grows massive + fades — just like the logo)
-      gsap.to(svcs[prevIdx], {
-        scale: 5.5, opacity: 0,
-        duration: 0.40, ease: 'power3.in',
-      });
-      // Camera simultaneously flies to next service
-      gsap.to(overview, {
-        x: cam.x, y: cam.y, scale: cam.scale,
-        duration: 0.72, ease: 'power3.out', delay: 0.15,
-      });
-      gsap.to(detail, { opacity: 1, duration: 0.3, delay: 0.62 });
-      gsap.fromTo(svcCards[idx],
-        { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, stagger: 0.09, duration: 0.42, ease: 'power2.out', delay: 0.68 }
-      );
-      if (svcCtas[idx]) gsap.fromTo(svcCtas[idx],
-        { opacity: 0, y: 8 },
-        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', delay: 0.85 }
-      );
-
-    /* ── Backward: current service recedes, previous grows back into view ── */
-    } else {
-      gsap.killTweensOf(svcs[prevIdx]);
-      // Current service shrinks away (you're retreating from it)
-      gsap.to(svcs[prevIdx], {
-        scale: 0.2, opacity: 0,
-        duration: 0.35, ease: 'power2.in',
-      });
-      // Camera retreats back to previous service
-      gsap.to(overview, {
-        x: cam.x, y: cam.y, scale: cam.scale,
-        duration: 0.72, ease: 'power3.out',
-      });
-      gsap.to(detail, { opacity: 1, duration: 0.3, delay: 0.52 });
-      gsap.fromTo(svcCards[idx],
-        { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, stagger: 0.09, duration: 0.42, ease: 'power2.out', delay: 0.58 }
-      );
-      if (svcCtas[idx]) gsap.fromTo(svcCtas[idx],
-        { opacity: 0, y: 8 },
-        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', delay: 0.75 }
-      );
+    // Exit outgoing service
+    if (prevIdx >= 0) {
+      gsap.to(svcCards[prevIdx], { opacity: 0, y: 8, duration: 0.2 });
+      if (svcCtas[prevIdx]) gsap.to(svcCtas[prevIdx], { opacity: 0, y: 8, duration: 0.15 });
+      exitFocus(prevIdx, dir);
     }
+
+    // Enter incoming service (0.2s delay built into enterFocus lets exit get a head start)
+    enterFocus(idx);
+
+    // Counter, cards, CTA timed to land as the approach completes (~1.05s total)
+    gsap.to(detail, { opacity: 1, duration: 0.35, delay: 0.70 });
+    gsap.fromTo(svcCards[idx],
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, stagger: 0.09, duration: 0.45, ease: 'power2.out', delay: 0.72 }
+    );
+    if (svcCtas[idx]) gsap.fromTo(svcCtas[idx],
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', delay: 0.90 }
+    );
   }
 
   /* ═══════════════════════════════════════
@@ -495,7 +348,7 @@
     activeTween = gsap.to(proxy, {
       p:        vTarget,
       duration: 0.80,
-      delay:    0.22,          // brief pause before camera moves
+      delay:    0.22,
       ease:     'power2.inOut',
       onUpdate() {
         vProgress = proxy.p;
@@ -512,7 +365,7 @@
     if (!dir) return;
     seekTo(Math.round(vTarget) + dir);
     wheelLocked = true;
-    setTimeout(() => { wheelLocked = false; }, 1100); // delay + tween + buffer
+    setTimeout(() => { wheelLocked = false; }, 1100);
   }, { passive: true });
 
   /* Touch */
@@ -542,37 +395,34 @@
 
   /* ═══════════════════════════════════════
      CLICK-TO-JUMP — clicking any service
-     jumps the camera directly to it
+     jumps directly to it
      ═══════════════════════════════════════ */
   svcs.forEach((svc, i) => {
     svc.addEventListener('click', () => {
       if (currentState === 'hero') return;
-      seekTo(i + 2); // 0=hero, 1=overview, 2+=services
+      seekTo(i + 2);
     });
   });
 
   /* ═══════════════════════════════════════
      MOUSE PARALLAX — services drift with cursor
-     Closer services (depth 1) react most,
-     further services (depth 5) barely move.
-     Uses CSS `translate` property so it
-     composes with GSAP's transform independently.
+     Only active in overview (suppressed on focused service).
+     Uses CSS `translate` so it composes with GSAP's transform independently.
      ═══════════════════════════════════════ */
   const PAR_FACTOR = [1.0, 0.68, 0.45, 0.28, 0.15]; // depth 1→5
-  const PAR_X      = 26;  // max horizontal drift px
-  const PAR_Y      = 16;  // max vertical drift px
-  const PAR_EASE   = 0.07; // lerp speed (lower = lazier)
+  const PAR_X      = 26;
+  const PAR_Y      = 16;
+  const PAR_EASE   = 0.07;
 
-  let pmx = 0, pmy = 0;                     // normalised mouse -0.5 → 0.5
-  let pcx = Array(svcs.length).fill(0);     // current interpolated x per svc
-  let pcy = Array(svcs.length).fill(0);     // current interpolated y per svc
+  let pmx = 0, pmy = 0;
+  let pcx = Array(svcs.length).fill(0);
+  let pcy = Array(svcs.length).fill(0);
   let praf = null;
 
   function parLoop() {
     let running = false;
     svcs.forEach((svc, i) => {
-      // Focused service must NOT receive parallax — the camera centers it on --sx/--sy.
-      // Any parallax offset shifts it away from where the camera is pointing.
+      // Suppress parallax on the focused service — any offset shifts it from center
       if (currentState === 'service' && i === currentSvcIdx) {
         if (pcx[i] !== 0 || pcy[i] !== 0) {
           pcx[i] = 0;
@@ -588,7 +438,6 @@
       pcx[i] += (tx - pcx[i]) * PAR_EASE;
       pcy[i] += (ty - pcy[i]) * PAR_EASE;
       if (Math.abs(pcx[i] - tx) > 0.08 || Math.abs(pcy[i] - ty) > 0.08) running = true;
-      // CSS `translate` is independent of GSAP's transform matrix
       svc.style.translate = `${pcx[i].toFixed(2)}px ${pcy[i].toFixed(2)}px`;
     });
     praf = running ? requestAnimationFrame(parLoop) : null;
@@ -613,15 +462,12 @@
   };
 
   function seekToHash(hash) {
-    const id  = (hash || '').replace('#', '');
-    const vp  = ANCHOR_MAP[id];
+    const id = (hash || '').replace('#', '');
+    const vp = ANCHOR_MAP[id];
     if (vp !== undefined) seekTo(vp);
   }
 
-  /* On load: if URL already has a hash, navigate there */
   if (window.location.hash) seekToHash(window.location.hash);
-
-  /* On hash change (back/forward navigation) */
   window.addEventListener('hashchange', () => seekToHash(window.location.hash));
 
   /* ═══════════════════════════════════════
@@ -635,8 +481,7 @@
   }
 
   /* ═══════════════════════════════════════
-     DESKTOP NAV LINKS — click to jump directly to service
-     Prevent default scroll-to-anchor; use camera animation instead.
+     DESKTOP NAV LINKS — jump directly to service
      ═══════════════════════════════════════ */
   navLinks.forEach((link, i) => {
     link.addEventListener('click', e => {

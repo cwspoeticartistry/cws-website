@@ -281,7 +281,7 @@ html, body {
   position: absolute;
   left: var(--sx);
   top:  var(--sy);
-  transform: translate(-50%, -50%);
+  /* No transform here — GSAP sets xPercent/yPercent at init so centering survives every tween */
   text-align: center;
   opacity: 0;
   will-change: opacity, transform, filter;
@@ -333,18 +333,25 @@ html, body {
 .svc[data-depth="4"] .svc__sub { font-size: clamp(6px,  0.50vw,  8px); opacity: 0.25; }
 .svc[data-depth="5"] .svc__sub { font-size: clamp(5px,  0.40vw,  7px); opacity: 0.18; }
 
-/* ── Focused state — font-size owned by GSAP ── */
-/* max-width constrains the element in overview-space; vw is always viewport-relative
-   even inside a transformed parent, so 44vw element * 1.8 scale ≈ 79vw visual. */
+/* ── Focused state — pinned to viewport center via position:fixed ── */
 .svc.is-focused {
+  position: fixed;
+  left: 50%;
+  top:  50%;
+  z-index: 25;
   max-width: 44vw;
 }
 .svc.is-focused .svc__name {
+  font-size: clamp(32px, 5.5vw, 72px);
   opacity: 1 !important;
   white-space: normal;
   word-break: break-word;
+  overflow-wrap: break-word;
 }
-.svc.is-focused .svc__sub  { opacity: 0.6 !important; }
+.svc.is-focused .svc__sub  {
+  font-size: clamp(9px, 0.85vw, 12px);
+  opacity: 0.6 !important;
+}
 
 /* ── CTA button inside each .svc (zooms with camera) ── */
 .svc__cta {
@@ -501,8 +508,9 @@ html, body {
     letter-spacing: 0.08em;
   }
 
-  /* Focused service max-width: element space; visual = 54vw * 1.5 ≈ 81vw */
-  .svc.is-focused { max-width: 54vw; }
+  .svc.is-focused { max-width: 80vw; }
+  .svc.is-focused .svc__name { font-size: clamp(24px, 7vw, 40px); }
+  .svc.is-focused .svc__sub  { font-size: clamp(8px, 2.5vw, 12px); }
 
   /* Service names */
   .svc[data-depth="1"] .svc__name { font-size: clamp(28px, 8vw, 44px); }
